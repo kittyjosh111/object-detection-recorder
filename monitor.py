@@ -24,32 +24,43 @@ def one_shot(adjacency, target):
   adjacent_match = 0
   print(f"DEBUG: Capturing {adjacency} images...")
   while adjacent_match < adjacency:
-    print(f"DEBUG: {adjacent_match+1}")
+    print(f"DEBUG: Checking image {adjacent_match+1}...")
     if target in capture_check(model).where("class", 0).column("name"):
       adjacent_match += 1
     else:
        return False
   return True
 
-def poller(freq, adjacency, target, match, fail, model):
+def poller(freq, adjacency, target, model):
   """Function that runs capture_check at a specified FREQ (seconds).
   Looks for a TARGET in the resulting table. If it finds a match for ADJACENCY
-  subsequent calls, run the MATCH function, else run the FAIL function."""
-  while True:
-    print(f"\nDEBUG: Current Time = {time.time()}")
+  subsequent calls, start recording."""
+  def inner(recording, toggle):
+    print(f"\n===== Current Time = {time.time()} =====")
     if one_shot(adjacency, target):
       print(f"DEBUG: {target} found in all {adjacency} images")
-      match
+      if not recording:
+        print("  - STARTING Recording...")
+      else:
+        print("  - Recording already STARTED...")
+      toggle = True
+      recording = True
     else:
       print(f"DEBUG: {target} NOT found in all {adjacency} images")
-      fail
+      if not recording:
+        print("  - Recording already STOPPED...")
+      else:
+        print("  - STOPPING Recording...")
+      recording = False
+      toggle = False
     print(f"DEBUG: sleeping for {freq} seconds...")
     time.sleep(freq)
-
+    return poller(freq, adjacency, target, model)(recording, toggle)
+  return inner
 
 model = torch.hub.load('ultralytics/yolov5', 'yolov5x', pretrained=True)
 
-poller(5, 3, "person", print(""), print(""), model)
+poller(5, 3, "person", model)(False, False)
 
 #Goals:
 # need a way to start and stop recordings. Consider making poller a recursive function and using currying
