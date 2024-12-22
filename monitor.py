@@ -50,3 +50,7 @@ def poller(freq, adjacency, target, match, fail, model):
 model = torch.hub.load('ultralytics/yolov5', 'yolov5x', pretrained=True)
 
 poller(5, 3, "person", print(""), print(""), model)
+
+#Goals:
+# need a way to start and stop recordings. Consider making poller a recursive function and using currying
+# if possible, try to get faster object detection.
